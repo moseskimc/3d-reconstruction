@@ -1,0 +1,6 @@
+input_path:
+  stereo_folder_path: "test_data/Bicycle1-perfect/"
+
+keypt_match:
+  method: "sift"
+  display: True
