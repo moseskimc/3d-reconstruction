@@ -1,6 +1,9 @@
 input_path:
   stereo_folder_path: "test_data/Bicycle1-perfect/"
 
+output_path:
+  tri_path: "output/Bicycle-perfect/"
+
 keypt_match:
   method: "sift"
   display: True
