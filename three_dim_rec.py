@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,14 +14,14 @@ class Reconstruction3D:
 
         We will later extend this class to scene reconstruction
         if time allows
-        
-        
+
+
         Attributes:
             K1, K2: intrinsic calib matrices for both cams
             d1, d2: distortion coefficients for both cams
             essR1, essR2, ess_t: rotation and translation mats for change of basis (cam1 -> cam2)
             imgPts1, imgPts2: list of matched keypoint tuples
-            fund: fundamental matrix corresponding to image pair 
+            fund: fundamental matrix corresponding to image pair
     """
 
     def __init__(self, K1, K2, d1, d2):
@@ -29,7 +30,7 @@ class Reconstruction3D:
             Args:
                 K1, K2 (np.ndarray): intrinsic matrices for cam 1 and 2, resp.
                 d1, d2 (np.array): distortion coefficients for cam 1 and 2, resp.
-            
+
             Returns:
                 None
 
@@ -47,10 +48,10 @@ class Reconstruction3D:
         self.fund = None
         # projection matrices
         self.proj1, self.proj2 = None, None
-        
+
         # data field
         self.imgPts1, self.imgPts2 = None, None
-        
+
         # triangulation result
         self.TriPts = None
 
@@ -86,7 +87,7 @@ class Reconstruction3D:
         cam2_extsc = np.hstack((R2, t2))
         # now compute projection matrix for cam 2
         proj_mat2 = cam2_intsc @ cam2_extsc
-        
+
         self.proj1, self.proj2 = proj_mat1, proj_mat2
 
     def est_essential_matrix(self):
@@ -102,7 +103,7 @@ class Reconstruction3D:
         """
         img1 = cv2.imread(path1)
         img2 = cv2.imread(path2)
-        
+
         return img1, img2
 
     def process_img_pair_keypts(self, path1, path2, method, draw):
@@ -115,7 +116,7 @@ class Reconstruction3D:
             param draw (bool, optional): whether to plot the matches in matplotlib. Defaults to False.
         """
         img1, img2 = self.load_img_pair(path1, path2)
-        
+
         if method == 'sift':
             gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
             gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
@@ -124,7 +125,7 @@ class Reconstruction3D:
             kps2, desc2 = sift.detectAndCompute(gray2, None)
             FLANN_INDEX_KDTREE = 0
             index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-            search_params = dict(checks=50)  
+            search_params = dict(checks=50)
 
             flann = cv2.FlannBasedMatcher(index_params,search_params)
             matches = flann.knnMatch(desc1,desc2,k=2)
@@ -142,17 +143,17 @@ class Reconstruction3D:
                     imgPts2.append(kps2[m.trainIdx].pt)   # TODO: find out what m.trainIDx is
                     imgPts1.append(kps1[m.queryIdx].pt)
             print("matches: "+str(len(good)))
-            
+
             imgPts1 = np.int32(imgPts1)
             imgPts2 = np.int32(imgPts2)
 
-            
+
             # apply mask computed from the fund matrix
             self.fund, mask = cv2.findFundamentalMat(imgPts1, imgPts2, cv2.LMEDS)
 
             self.imgPts1 = imgPts1[mask.ravel()==1]
             self.imgPts2 = imgPts2[mask.ravel()==1]
-            
+
         # draw correspondences
         # converting BGR to RGB for plotting
         if draw:
@@ -166,35 +167,35 @@ class Reconstruction3D:
             img3 = cv2.drawMatchesKnn(disp1,kps1,disp2,kps2,matches,None,**draw_params)
             plt.figure(figsize = (20,20))
             plt.imshow(img3,),plt.show()
-    
+
     def normalize_keypts(self):
         """Normalize matched keypoints
         """
-        
+
         imgPts1 = self.imgPts1
         imgPts2 = self.imgPts2
-        
+
         # first homogenize and reshape before normalization
         hom_img1= cv2.convertPointsToHomogeneous(imgPts1).reshape(-1,3)
         hom_img2= cv2.convertPointsToHomogeneous(imgPts2).reshape(-1,3)
-        
+
         # normalize
         K1_inv, K2_inv = np.linalg.inv(self.K1), np.linalg.inv(self.K2)
         imgPts1_norm = K1_inv.dot(hom_img1.T).T
         imgPts2_norm = K2_inv.dot(hom_img2.T).T
-        
+
         # nonhomegenize to get planar coordinates
         imgPts1_norm = cv2.convertPointsFromHomogeneous(imgPts1_norm).reshape(-1,2)
         imgPts2_norm = cv2.convertPointsFromHomogeneous(imgPts2_norm).reshape(-1,2)
-        
-        
+
+
         self.imgPts1 = imgPts1_norm
         self.imgPts2 = imgPts2_norm
-        
+
     def triangulate(self, use_dlt=True):
         """Triangulate using cv2's built-in method
         """
-        
+
         # compute projection matrices
         Mat1, Mat2 = self.proj1, self.proj2
         Pts1, Pts2 = self.imgPts1, self.imgPts2
@@ -209,8 +210,8 @@ class Reconstruction3D:
             imgPts_hom = cv2.triangulatePoints(Mat1, Mat2, self.imgPts1.T, self.imgPts2.T).T
 
             # non-homogenize
-            self.TriPts = cv2.convertPointsFromHomogeneous(imgPts_hom).reshape(-1,3)   
-    
+            self.TriPts = cv2.convertPointsFromHomogeneous(imgPts_hom).reshape(-1,3)
+
     def compute_dlt_tri(self, pt1, pt2):
         """Return triangulated point for pair pt1, pt2 usingi DLT
 
@@ -221,10 +222,10 @@ class Reconstruction3D:
         Returns:
             np.array: triangulated triplet from pt1 and pt2
         """
-        
+
         # read in proj matrices
         P1, P2 = self.proj1, self.proj2
-        
+
         # homogeneous coefficient matrix
         A = [pt1[1]*P1[2,:] - P1[1,:],
              P1[0,:] - pt1[0]*P1[2,:],
@@ -232,17 +233,17 @@ class Reconstruction3D:
              P2[0,:] - pt2[0]*P2[2,:]
             ]
         A = np.array(A).reshape((4,4))
-        
+
         # find eigenvectors with eigenvalue close to zero
         # find svd decompostion of A.T(A)
         B = A.transpose() @ A
         U, s, Vh = linalg.svd(B, full_matrices=False)
 
         return Vh[3,0:3]/Vh[3,3]
-        
+
     def compute_reproj_error(self):
         """Compute RMSE for projection onto image plane of cam 2"""
-        
+
         # compute rotation vector corresponding to EssR2
         rot_vector, jacobian = cv2.Rodrigues(self.EssR2)
         # project onto second image plane
@@ -250,9 +251,9 @@ class Reconstruction3D:
         # finally, compute and return error
         return np.mean(np.sqrt(np.sum((self.imgPts2-proj_points.reshape(-1,2))**2,axis=-1)))
 
-    def plot_3d_points(self):
-        """Plot 3D points using matplotlib"""        
-        
+    def plot_3d_points(self, config):
+        """Plot 3D points using matplotlib"""
+
         # unpack coordintates
         x, y, z = self.TriPts.T
         # initialize figure
@@ -268,6 +269,12 @@ class Reconstruction3D:
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-        
+
         # display
+        save_path = config["output_path"]["tri_path"]
+        file_path = os.path.join(
+            save_path,
+            "triangulation.png"
+        )
+        plt.savefig(file_path)
         plt.show()
