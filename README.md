@@ -36,6 +36,6 @@ Matched keypoints are shown below
 
 ![Keypoints](output/Bicycle-perfect/keypts.png)
 
-After performing triangulation, we obtain (note: the image below was a result of a rotation, your output might be different):
+After performing triangulation, we obtain (note: the image below was saved after performing a rotation, your output might look different):
 
 ![Triangulation](output/Bicycle-perfect/tri.png)
