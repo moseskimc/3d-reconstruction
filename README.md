@@ -14,7 +14,7 @@ Note: we have added a few data sets under `test_data/` directory for convenience
 
 # Environment
 
-Create your envirnoment using `conda` or `virtualenv`. Make sure `which pip` is pointing to the correct path. Then, run
+Create your virtual envirnoment using `conda` or `virtualenv`. Make sure `which pip` is pointing to the correct path. Then, run
 
 ```pip install -r requirements.txt ```
 
