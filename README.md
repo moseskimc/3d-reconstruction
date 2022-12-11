@@ -1,10 +1,10 @@
-# 3d-reconstruction 
+# 3d-reconstruction
 
 # Introduction
 
 Three dimensional stereo reconstruction is a fundamental technique in computer vision with a wide range of application in fields such as augmented reality, gaming, and animation to mention a few.
 
-(TODO: give a brief overview of epipolar geometry)
+(TODO: give a brief overview of triangulation, epipolar geometry, essential matrix, etc.)
 
 # Data
 
