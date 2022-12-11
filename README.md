@@ -12,6 +12,13 @@ The Computer Vision team at Middleburry College has made benchmark stereo datase
 
 Note: we have added a few data sets under `test_data/` directory for convenience.
 
+# Environment
+
+Create your envirnoment using `conda` or `virtualenv`. Make sure `which pip` is pointing to the correct path. Then, run
+
+```pip install -r requirements.txt ```
+
+
 # Script
 ```python reconstruct.py```
 
@@ -29,6 +36,6 @@ Matched keypoints are shown below
 
 ![Keypoints](output/Bicycle-perfect/keypts.png)
 
-After performing triangulation, we obtain:
+After performing triangulation, we obtain (note: the image below was a result of a rotation, your output might be different):
 
 ![Triangulation](output/Bicycle-perfect/tri.png)
